@@ -154,8 +154,8 @@ curl -X POST http://localhost:3000/job \
   -d '{
     "email": "you@example.com",
     "users": [
-      { "name": "Avery Alvarez", "email": "avery.alvarez@example.com", "phone": "+1-531-354-7468" },
-      { "name": "Blake Hayes",   "email": "blake.hayes@test.dev",      "phone": null }
+      { "name": "Avery", "email": "avery@example.com", "phone": "+x-xxx-xxx-xxxx" },
+      { "name": "Blake",   "email": "blake@example.com",      "phone": null }
     ]
   }'
 ```
