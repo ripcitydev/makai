@@ -4,7 +4,6 @@ import {
   isCancellation,
 } from "@temporalio/workflow";
 import type * as activities from "./activities.js";
-// import { type Status } from "../db/models/job.ts";
 
 const { status, processJob } = proxyActivities<typeof activities>({
   scheduleToCloseTimeout: "1 hours",
@@ -13,7 +12,6 @@ const { status, processJob } = proxyActivities<typeof activities>({
 });
 
 export async function workflow(id: string): Promise<void> {
-  // let final: Status = "completed";
   try {
     await status(id, "processing");
     await processJob(id);
