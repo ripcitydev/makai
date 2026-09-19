@@ -1,6 +1,98 @@
 # Makai
 
-One-line description.
+## Architecture
+
+The API never imports users itself. It validates the request, persists the batch as a
+single `job` row, hands the job ID to Temporal, and returns immediately. A separate
+worker process does the actual work, which is what makes the import durable across
+restarts and cooperatively cancelable.
+
+### Submitting and processing a job
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor C as Client
+    participant API as Express API
+    participant DB as Postgres
+    participant T as Temporal
+    participant W as Worker
+    participant M as SMTP
+
+    C->>API: POST /job<br/>Idempotency-Key, email, users[]
+    API->>API: zod validation
+    API->>DB: INSERT job (status "queued")
+    API->>T: workflow.start(job.id) on queue "jobs"
+    API-->>C: 201 Created<br/>Location: /job/{id}
+
+    T->>W: dispatch workflow task
+    W->>DB: status(id, "processing")
+
+    loop each record in job.users
+        W->>T: heartbeat(index)
+        W->>DB: INSERT user
+        Note over W,DB: UniqueConstraintError / ValidationError<br/>→ skip record, keep going
+    end
+
+    W->>DB: status(id, "completed")
+    W->>M: notify job.email
+
+    C->>API: GET /job/:id
+    API->>DB: SELECT job
+    API-->>C: 200 { id, status, createdAt, updatedAt }
+```
+
+Each record is heartbeated with its index before insertion. If the activity is retried,
+`processJob` reads `heartbeatDetails` and resumes at that index rather than replaying
+the whole batch — so a worker crash mid-import does not re-insert what already landed.
+
+### Cancellation
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor C as Client
+    participant API as Express API
+    participant T as Temporal
+    participant W as Worker
+    participant DB as Postgres
+    participant M as SMTP
+
+    C->>API: DELETE /job/:id
+    API->>T: handle.cancel()
+    API-->>C: 202 Accepted
+
+    T-->>W: cancellation signal
+    Note over W: in-flight record finishes —<br/>loop stops at the next boundary
+    W->>W: catch → isCancellation(error)
+    rect rgb(240, 240, 240)
+        Note over W,DB: CancellationScope.nonCancellable
+        W->>DB: status(id, "canceled")
+        W->>M: notify job.email
+    end
+    W-->>T: rethrow → workflow ends canceled
+```
+
+The terminal status write is wrapped in `CancellationScope.nonCancellable` so the job
+row and the notification still go out after the workflow itself has been canceled.
+Records imported before cancellation are kept; there is no rollback.
+
+### Job status
+
+```mermaid
+stateDiagram-v2
+    [*] --> queued: POST /job inserts the row
+    queued --> processing: workflow starts
+    processing --> completed: every record attempted
+    processing --> canceled: DELETE /job/:id
+    processing --> failed: unhandled error
+    completed --> [*]
+    canceled --> [*]
+    failed --> [*]
+```
+
+Entering `completed`, `canceled`, or `failed` triggers the notification email to the
+address supplied on submission. `queued` and `processing` do not.
 
 ## Local Install
 
@@ -80,10 +172,6 @@ The `Location` header points at the status endpoint for this job.
 | Status | Condition                                                      |
 | ------ | -------------------------------------------------------------- |
 | `500`  | Unexpected server error                                        |
-
-Individual records are **not** rejected at this stage beyond schema validation.
-Rows that violate a database constraint (a duplicate email, for example) are skipped
-during processing and do not fail the job.
 
 ---
 
