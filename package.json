@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "sync": "tsx src/db/schema.ts",
-    "worker": "tsx watch --env-file=.env src/temporal/worker.ts"
+    "worker": "tsx watch --env-file=.env src/temporal/worker.ts",
+    "temporal": "temporal server start-dev"
   },
   "author": "Casey Olivier",
   "type": "module",
