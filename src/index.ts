@@ -86,7 +86,7 @@ app.delete("/job/:id", async (req, res) => {
   } catch (error) {
     res.sendStatus(500);
   }
-  res.sendStatus(204);
+  res.sendStatus(202);
 });
 
 app.listen(3000, () => {
