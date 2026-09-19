@@ -6,6 +6,7 @@ export const status = [
   "processing",
   "canceled",
   "completed",
+  "failed",
 ] as const;
 export type Status = (typeof status)[number];
 
@@ -20,7 +21,12 @@ export const Job = sequelize.define("job", {
     allowNull: false,
     unique: true,
   },
-  data: {
+  email: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+    validate: { isEmail: true },
+  },
+  users: {
     type: DataTypes.JSONB,
     allowNull: false,
   },

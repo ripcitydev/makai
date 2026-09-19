@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "sync": "tsx src/db/schema.ts",
-    "worker": "tsx watch src/temporal/worker.ts"
+    "worker": "tsx watch --env-file=.env src/temporal/worker.ts"
   },
   "author": "Casey Olivier",
   "type": "module",
@@ -15,13 +15,16 @@
     "@temporalio/worker": "^1.24.0",
     "@temporalio/workflow": "^1.24.0",
     "express": "^5.2.1",
+    "nodemailer": "^10.0.10",
     "pg": "^8.23.0",
     "sequelize": "^6.37.8",
-    "tsx": "^4.23.13"
+    "tsx": "^4.23.13",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^22.20.3",
+    "@types/nodemailer": "^8.0.2",
     "typescript": "^7.0.2"
   }
 }
