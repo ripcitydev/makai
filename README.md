@@ -2,9 +2,9 @@
 
 - The high-level architecture used was to implement a system to accept jobs via the POST endpoint returning immediately to prevent timeouts and to facilitate scaling, relying on Temporal to process jobs asynchronously.
 - The major components are Express to standup endpoints, and Temporal as a durable job processing engine complete with failure recovery.
-- A few of the hardest problems were the failure recovery which again was offloaded to Temporal, and ...
-- Assumptions were made implementing the cancel endpoint as a DELETE given jobs are cancelled but job records remain. This requires iteration.
-- I developed this project by hand with the assistance of Claude Desktop for reference, though stopped short of implementing with Claude Code with the exception of the diagrams in this file.
+- A few of the hardest problems were the failure recovery which was ultimately offloaded to Temporal, and ...
+- Assumptions were made implementing the cancel endpoint as a DELETE given jobs are cancelled but job records remain, this should be iterated on.
+- This project was developed by hand with the assistance of Claude Desktop for reference, though I stopped short of implementing with Claude Code with the exception of the diagrams in this file.
 
 ## Architecture
 
